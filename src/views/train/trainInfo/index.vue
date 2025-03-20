@@ -131,12 +131,12 @@
       </el-table-column>
       <el-table-column label="出发时间" align="center" prop="departureTime" width="180">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.departureTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ scope.row.departureTime }}</span>
         </template>
       </el-table-column>
       <el-table-column label="到达时间" align="center" prop="arrivalTime" width="180">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.arrivalTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ scope.row.arrivalTime }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -165,26 +165,25 @@
         <el-form-item label="列车车次" prop="trainNumber">
           <el-input v-model="form.trainNumber" placeholder="请输入列车车次"/>
         </el-form-item>
-        <el-form-item label="列车类型">
-<!--下拉选择-->
-        </el-form-item>
-        <el-form-item label="列车标签">
-<!--多选-->
-        </el-form-item>
-        <el-form-item label="列车品牌">
-<!--多选-->
-        </el-form-item>
         <el-form-item label="起始站" prop="saleStartStation">
-          <el-input v-model="form.startStation" placeholder="请选择起始站"/>
+          <el-select v-model="form.startStation" placeholder="请选择起始站">
+            <el-option
+                v-for="item in cityList"
+                :key="item.id"
+                :label="item.name"
+                :value="item.name">
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="到达站" prop="saleEndStation">
-          <el-input v-model="form.endStation" placeholder="请选择到达站"/>
-        </el-form-item>
-        <el-form-item label="起始城市" prop="saleStartStation">
-          <el-input v-model="form.startRegion" placeholder="请选择起始城市"/>
-        </el-form-item>
-        <el-form-item label="到达城市" prop="saleEndStation">
-          <el-input v-model="form.endRegion" placeholder="请选择到达城市"/>
+          <el-select v-model="form.endStation" placeholder="请选择到达站">
+            <el-option
+                v-for="item in cityList"
+                :key="item.id"
+                :label="item.name"
+                :value="item.name">
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="销售时间" prop="saleTime">
           <el-date-picker
@@ -196,28 +195,28 @@
           </el-date-picker>
         </el-form-item>
         <el-form-item label="出发时间" prop="departureTime">
-          <el-date-picker
+          <el-time-select
               clearable
               v-model="form.departureTime"
               type="date"
+              start="07:00"
+              step="00:15"
+              end="22:00"
               value-format="YYYY-MM-DD"
               placeholder="请选择出发时间">
-          </el-date-picker>
+          </el-time-select>
         </el-form-item>
         <el-form-item label="到达时间" prop="arrivalTime">
-          <el-date-picker
+          <el-time-select
               clearable
               v-model="form.arrivalTime"
               type="date"
+              start="07:00"
+              step="00:15"
+              end="23:00"
               value-format="YYYY-MM-DD"
               placeholder="请选择到达时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="销售状态">
-<!--          下拉选择-->
-        </el-form-item>
-        <el-form-item label="删除标识" prop="delFlag">
-          <el-input v-model="form.delFlag" placeholder="请输入删除标识"/>
+          </el-time-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -258,8 +257,9 @@ const trainTag = new Map([
   ['2', '静音车厢'],
   ['3', '支持选铺']
 ]);
+
 const trainBrand = new Map([
-  ['0', 'GC-高铁/城际'],
+  ['0', '高铁/城际'],
   ['1', 'D-动车'],
   ['2', 'Z-直达'],
   ['3', 'T-特快'],
@@ -391,6 +391,17 @@ function submitForm() {
           getList();
         });
       } else {
+        form.value.startRegion = cityList.value.find(e => e.name === form.value.startStation).regionName
+        form.value.endRegion = cityList.value.find(e => e.name === form.value.endStation).regionName
+        form.value.delFlag = 0
+        form.value.saleStatus = 0
+        form.value.trainBrand = 0
+        form.value.trainTag = 1
+        form.value.trainType = 0
+
+        const { id, createTime, updateTime, ...newForm } = form.value;
+        form.value = newForm;
+
         addTrain(form.value).then(response => {
           proxy.$modal.msgSuccess("新增成功");
           open.value = false;
